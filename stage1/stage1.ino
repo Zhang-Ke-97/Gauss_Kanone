@@ -1,5 +1,3 @@
-#include "stage1.h"
-
 typedef uint8_t pin;
 enum state_stage1 {INIT, FIRE, IDLE, STOP, CALCULATE};
 enum state_stage1 state = IDLE;
@@ -12,13 +10,16 @@ const pin photocell_2 = 5;
 unsigned long t_fire; // the moment at which the MOSFET is switched on (ms)
 unsigned long t_photocell_1 = 0; // the moment at which the projectile blocked the first photocell (ms)
 unsigned long t_photocell_2 = 0; // the moment at which the projectile blocked the second photocell (ms)
-const double time_on_optimal = 200.00; // Optimal t_on calculated by simulation (ms)
+const double time_on_optimal = 2000.00; // Optimal t_on calculated by simulation (ms)
 const double d_photocells = 5; // distance between photocells (cm)
 double velocity_stage_1 = 0;
 
 void setup() {
-  pinMode(coil_1, OUTPUT);
+  Serial.begin(9600);
   pinMode(shoot, INPUT_PULLUP); // Turn on internal pull-up resitor
+  pinMode(photocell_1, INPUT_PULLUP);
+  pinMode(photocell_2, INPUT_PULLUP);
+  pinMode(coil_1, OUTPUT);
 }
 
 void loop() {
@@ -31,6 +32,7 @@ void loop() {
         t_photocell_1 = millis();
         state = IDLE;
       }
+      Serial.print("INIT\n");
       break;
 
     case FIRE:
@@ -39,6 +41,7 @@ void loop() {
       if(millis()-t_fire < time_on_optimal){
         state = IDLE;
       }
+      Serial.print("FIRE\n");
       break;
 
     case IDLE:
@@ -56,11 +59,15 @@ void loop() {
       // ...Handle more tasks while discharching the capacitor.
       // e.g. To control an external display while discharching,
       //      just extend a new state DISPLAY
+      Serial.print("IDLE\n");
       break;
 
     case STOP:
       digitalWrite(coil_1, LOW); // Turn off MOSFET
-      state = INIT;
+      if(digitalRead(shoot)==LOW){ // if the button is released, set the state to INIT
+        state = INIT;
+      }
+      Serial.print("STOP\n");
       break;
 
     case CALCULATE:
@@ -70,6 +77,7 @@ void loop() {
         t_photocell_2 = 0;
       }
       state = INIT;
+      Serial.print("CALCULATE\n");
       break;
   }
 
