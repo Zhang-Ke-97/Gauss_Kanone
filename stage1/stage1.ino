@@ -1,6 +1,6 @@
 typedef uint8_t pin;
-enum state_stage1 {INIT, FIRE, IDLE, STOP, CALCULATE};
-enum state_stage1 state = IDLE;
+enum State {INIT, FIRE, IDLE, STOP, CALCULATE};
+enum State state = INIT;
 
 const pin coil_1 = 9;
 const pin shoot = 7;
@@ -12,7 +12,7 @@ unsigned long t_photocell_1 = 0; // the moment at which the projectile blocked t
 unsigned long t_photocell_2 = 0; // the moment at which the projectile blocked the second photocell (ms)
 const double time_on_optimal = 2000.00; // Optimal t_on calculated by simulation (ms)
 const double d_photocells = 5; // distance between photocells (cm)
-double velocity_stage_1 = 0;
+double velocity_stage_1 = 0; // cm per ms <=> 10* m per s
 
 void setup() {
   Serial.begin(9600);
@@ -64,7 +64,7 @@ void loop() {
 
     case STOP:
       digitalWrite(coil_1, LOW); // Turn off MOSFET
-      if(digitalRead(shoot)==LOW){ // if the button is released, set the state to INIT
+      if(digitalRead(shoot)==LOW){ // Set the state to INIT if the button is released
         state = INIT;
       }
       Serial.print("STOP\n");
@@ -72,12 +72,13 @@ void loop() {
 
     case CALCULATE:
       if(t_photocell_1!=0 && t_photocell_2!=0){
-        velocity_stage_1 = d_photocells/(t_photocell_2-t_photocell_1);
+        velocity_stage_1 = d_photocells/(double)(t_photocell_2-t_photocell_1);
         t_photocell_1 = 0;
         t_photocell_2 = 0;
       }
       state = INIT;
-      Serial.print("CALCULATE\n");
+      Serial.print("CALCULATE: ");
+      Serial.println(velocity_stage_1*10, 4); // Print the velocity (m per s)
       break;
   }
 
