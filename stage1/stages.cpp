@@ -1,6 +1,6 @@
 #include "stages.h"
 
-extern enum State state_1;
+extern enum State state;
 
 extern const pin coil_1;
 extern const pin shoot;
@@ -15,55 +15,53 @@ static const double d_photocells = 5; // distance between photocells (cm)
 static double velocity_stage_1 = 0; // cm per ms <=> 10* m per s
 
 void run_stage_1() {
-  switch(state_1) {
+  switch(state) {
     case INIT:
-      if(digitalRead(shoot)==HIGH) {
-        state_1 = FIRE;
+      if(BUTTON_PUSHED(shoot)) {
+        digitalWrite(coil_1, HIGH); // Turn on MOSFET and discharge the capacitor
+        t_fire = millis();
+        state = FIRING;
       }
-      if(digitalRead(photocell_1) == LOW) {
+      if(BLOCKED(photocell_1)) {
         t_photocell_1 = millis();
-        state_1 = IDLE;
+        state = WAITING;
       }
       Serial.print("INIT\n");
       break;
 
-    case FIRE:
-      digitalWrite(coil_1, HIGH); // Turn on MOSFET and discharge the capacitor
-      t_fire = millis();
-      if(millis()-t_fire < time_on_optimal){
-        state_1 = IDLE;
+    case FIRING:
+      if(EXPIRED((double)millis(), (double)t_fire, time_on_optimal)){
+        state = STOPPED;
       }
-      Serial.print("FIRE\n");
-      break;
-
-    case IDLE:
-      if(digitalRead(photocell_2) == LOW) {
-        t_photocell_2 = millis();
-        state_1 = CALCULATE;
-      }
-      if(millis()-t_fire >= time_on_optimal){ //Stop firing if time expires
-        state_1 = STOP;
-      }
-      if(digitalRead(photocell_1) == LOW) {
+      if(BLOCKED(photocell_1)) { //
+        digitalWrite(coil_1, LOW);
         t_photocell_1 = millis();
-        state_1 = STOP;
+        state = WAITING;
       }
-      // ...Handle more tasks while discharching the capacitor.
-      // e.g. To control an external display while discharching,
-      //      just extend a new state DISPLAY
-      Serial.print("IDLE\n");
+      Serial.print("FIRING\n");
       break;
 
-    case STOP:
+    case STOPPED:
       digitalWrite(coil_1, LOW); // Turn off MOSFET
-      if(digitalRead(shoot)==LOW){ // Set the state to INIT if the button is released
-        state_1 = INIT;
+      if(BLOCKED(photocell_1)) {
+        t_photocell_1 = millis();
+        state = WAITING;
       }
-
-      Serial.print("STOP\n");
+      if(BUTTON_RELEASED(shoot)){ // Set the state to INIT if the button is released
+        state = INIT;
+      }
+      Serial.print("STOPPED\n");
       break;
 
-    case CALCULATE:
+    case WAITING:
+      if(BLOCKED(photocell_2)) {
+        t_photocell_2 = millis();
+        state = CALCULATING;
+      }
+      Serial.print("WAITING\n");
+      break;
+
+    case CALCULATING:
       if(t_photocell_1!=0 && t_photocell_2!=0){
         velocity_stage_1 = d_photocells/(double)(t_photocell_2-t_photocell_1);
         t_photocell_1 = 0;
@@ -71,21 +69,14 @@ void run_stage_1() {
       }
       Serial.print("State: CALCULATE | The velocity is ");
       Serial.print(velocity_stage_1*10, 4); // Print the velocity (m per s)
-      Serial.print(" m/s");
-      // state_1 = INIT;
+      Serial.print(" m/s \n");
+      //TODO: OUTPUT THE VELOCITY ONTO THE EXTERNAL MINI-DISPLAY
+
+      if (UNBLOCKED(photocell_2)) {
+        // Back to INIT when the projectile leaves the second photocell
+        state = INIT;
+      }
       break;
   }
 
-}
-
-void run_stage_2() {
-  //TODO: IMPLEMENTATION OF THE BEHAVIOR OF THE SECOND SATGE
-}
-
-void run_stage_3() {
-  //TODO: IMPLEMENTATION OF THE BEHAVIOR OF THE THIRD SATGE
-}
-
-void run_stage_4() {
-  //TODO: IMPLEMENTATION OF THE BEHAVIOR OF THE FOURTH SATGE
 }
