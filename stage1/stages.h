@@ -27,6 +27,11 @@ typedef unsigned char pin;
  */
 enum State {INIT, FIRING, STOPPED, WAITING, CALCULATING};
 
+enum SuperState {STAGE_1, STAGE_2, STAGE_3, STAGE_4};
+
 void run_stage_1();
+void run_stage_2();
+void run_stage_3();
+void run_stage_4();
 
 #endif

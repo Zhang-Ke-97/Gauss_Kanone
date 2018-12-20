@@ -1,6 +1,6 @@
 #include "stages.h"
 
-extern enum State state;
+extern enum State state_1;
 
 extern const pin coil_1;
 extern const pin shoot;
@@ -15,28 +15,28 @@ static const double d_photocells = 5; // distance between photocells (cm)
 static double velocity_stage_1 = 0; // cm per ms <=> 10* m per s
 
 void run_stage_1() {
-  switch(state) {
+  switch(state_1) {
     case INIT:
       if(BUTTON_PUSHED(shoot)) {
         digitalWrite(coil_1, HIGH); // Turn on MOSFET and discharge the capacitor
         t_fire = millis();
-        state = FIRING;
+        state_1 = FIRING;
       }
       if(BLOCKED(photocell_1)) {
         t_photocell_1 = millis();
-        state = WAITING;
+        state_1 = WAITING;
       }
       Serial.print("INIT\n");
       break;
 
     case FIRING:
       if(EXPIRED((double)millis(), (double)t_fire, time_on_optimal)){
-        state = STOPPED;
+        state_1 = STOPPED;
       }
       if(BLOCKED(photocell_1)) { //
         digitalWrite(coil_1, LOW);
         t_photocell_1 = millis();
-        state = WAITING;
+        state_1 = WAITING;
       }
       Serial.print("FIRING\n");
       break;
@@ -45,10 +45,10 @@ void run_stage_1() {
       digitalWrite(coil_1, LOW); // Turn off MOSFET
       if(BLOCKED(photocell_1)) {
         t_photocell_1 = millis();
-        state = WAITING;
+        state_1 = WAITING;
       }
-      if(BUTTON_RELEASED(shoot)){ // Set the state to INIT if the button is released
-        state = INIT;
+      if(BUTTON_RELEASED(shoot)){ // Set the state_1 to INIT if the button is released
+        state_1 = INIT;
       }
       Serial.print("STOPPED\n");
       break;
@@ -56,7 +56,7 @@ void run_stage_1() {
     case WAITING:
       if(BLOCKED(photocell_2)) {
         t_photocell_2 = millis();
-        state = CALCULATING;
+        state_1 = CALCULATING;
       }
       Serial.print("WAITING\n");
       break;
@@ -74,7 +74,7 @@ void run_stage_1() {
 
       if (UNBLOCKED(photocell_2)) {
         // Back to INIT when the projectile leaves the second photocell
-        state = INIT;
+        state_1 = INIT;
       }
       break;
   }
