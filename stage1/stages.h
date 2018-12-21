@@ -6,7 +6,7 @@
 #include "Arduino.h"
 
 #define BUTTON_PUSHED(button_pin) digitalRead(button_pin)==HIGH
-#define BUTTON_RELEASED(button_pin) digitalRead(button_pin)==HIGH
+#define BUTTON_RELEASED(button_pin) digitalRead(button_pin)==LOW
 
 /* [IMPORTANT]
  * For both photocells:
