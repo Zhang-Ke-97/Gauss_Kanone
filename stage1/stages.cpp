@@ -1,5 +1,9 @@
 #include "stages.h"
 
+#ifndef DEBUG_GUASS
+#define DEBUG_GUASS
+#endif
+
 static unsigned long t_fire; // the moment when the MOSFET is switched on (ms)
 static unsigned long t_photocell_1 = 0; // the moment when the projectile blocked the 1.photocell (ms)
 static unsigned long t_photocell_2 = 0; // the moment when the projectile blocked the 2.photocell (ms)
@@ -16,13 +20,13 @@ State* Stage::get_current_state() {
   return current_state;
 }
 pin Stage::get_photocell_1() {
-return photocell_1;
+  return photocell_1;
 }
 pin Stage::get_photocell_2() {
-return photocell_2;
+  return photocell_2;
 }
 pin Stage::get_coil() {
-return coil;
+  return coil;
 }
 double Stage::get_velocity() {
   return this->velocity;
@@ -67,6 +71,11 @@ void Stage::stop() {
   digitalWrite(coil, LOW);
 }
 
+/* [IMPORTANT]
+ * For both photocells:
+ * LOW <=> nothing (trivial case)
+ * HIGH <=> blocked (projectile passing through)
+ */
 bool Stage::photocell_1_blocked(){
   return digitalRead(photocell_1)==HIGH;
 }
@@ -79,10 +88,6 @@ void Stage::calculate_velocity() {
     velocity=distance_photocells/(double)(t_photocell_2-t_photocell_1);
   }
 }
-void Stage_1::run_stage() {
-  this->get_current_state()->run(this);
-}
-
 
 
 
@@ -106,16 +111,29 @@ bool Stage_1::button_released() {
   pinMode(this->get_coil(), OUTPUT);
 }
 
+void Stage_1::run_stage() {
+  this->get_current_state()->run(this);
+}
+
  void State_INIT::run(Stage_1* stage_1) {
   if(stage_1->button_pressed()) {
     stage_1->fire(); // Turn on MOSFET and discharge the capacitor
     t_fire = millis();
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_FIRING());
   }
   if(stage_1->photocell_1_blocked()) {
     t_photocell_1 = millis();
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_WAITING());
   }
+  #ifdef DEBUG_GUASS
+  Serial.print("INIT\n");
+  #endif
 }
 
  void State_INIT::show(){
@@ -126,13 +144,22 @@ bool Stage_1::button_released() {
  void State_FIRING::run(Stage_1* stage_1) {
   if(EXPIRED((double)millis(), (double)t_fire, stage_1->get_t_optimal())){
     stage_1->stop(); // Turn off MOSFET
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_STOPPED());
   }
   if(stage_1->photocell_1_blocked()) {
     stage_1->stop(); // Turn off MOSFET
     t_photocell_1 = millis();
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_WAITING());
   }
+  #ifdef DEBUG_GUASS
+  Serial.print("FIRING\n");
+  #endif
 }
  void State_FIRING::show() {
   Serial.print("FIRING\n");
@@ -142,11 +169,20 @@ bool Stage_1::button_released() {
  void State_STOPPED::run(Stage_1* stage_1){
   if(stage_1->photocell_1_blocked()) {
     t_photocell_1 = millis();
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_WAITING());
   }
   if(stage_1->button_released()){ // Set the state_1 to INIT if the button is released
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_INIT());
   }
+  #ifdef DEBUG_GUASS
+  Serial.print("STOPPED\n");
+  #endif
 }
 
  void State_STOPPED::show(){
@@ -157,9 +193,16 @@ bool Stage_1::button_released() {
  void State_WAITING::run(Stage_1* stage_1) {
   if(stage_1->photocell_2_blocked()) {
     t_photocell_2 = millis();
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_CALCULATING);
   }
+  #ifdef DEBUG_GUASS
+  Serial.print("WAITING\n");
+  #endif
 }
+
  void State_WAITING::show() {
   Serial.print("WAITING\n");
 }
@@ -171,12 +214,15 @@ bool Stage_1::button_released() {
     t_photocell_2 = 0;
   }
   Serial.print("State: CALCULATE | The velocity is ");
-  Serial.print(stage_1->get_velocity()*10, 4); // Print the velocity (m per s)
+  Serial.print(stage_1->get_velocity(), 4); // Print the velocity (m per s)
   Serial.print(" m/s \n");
-  //TODO: OUTPUT THE VELOCITY ONTO THE EXTERNAL MINI-DISPLAY
+  // TODO: OUTPUT THE VELOCITY ONTO THE EXTERNAL MINI-DISPLAY
 
   if(!stage_1->photocell_2_blocked()) {
     // Back to INIT when the projectile leaves the second photocell
+    if (stage_1->get_current_state()!=NULL) {
+      delete stage_1->get_current_state();
+    }
     stage_1->set_current_state(new State_INIT());
   }
 }

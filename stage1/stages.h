@@ -1,9 +1,9 @@
-/* [State description]
- * INIT: inital state, ready for firing and calclulation
- * FIRING: the MOSFET is turned on, discharging capacitor
- * STOPPED: MOSFET is turned off
- * WAITING: waiting for the projectile reaching the 2.photocell
- * CALCULATING: calculate the velocity
+/* [Class description]
+ * State_INIT: inital state, ready for firing and calclulation
+ * State_FIRING: the MOSFET is turned on, discharging capacitor
+ * State_STOPPED: MOSFET is turned off
+ * State_WAITING: waiting for the projectile reaching the 2.photocell
+ * State_CALCULATING: calculate the velocity
  */
 
 #ifndef GAUSS_KANONE_STAGES_H
@@ -13,16 +13,6 @@
 
 #include "Arduino.h"
 
-#define BUTTON_PUSHED(button_pin) digitalRead(button_pin)==HIGH
-#define BUTTON_RELEASED(button_pin) digitalRead(button_pin)==LOW
-
-/* [IMPORTANT]
- * For both photocells:
- * LOW <=> nothing (trivial case)
- * HIGH <=> blocked (projectile passing through)
- */
-#define BLOCKED(photo_pin) digitalRead(photo_pin)==HIGH
-#define UNBLOCKED(photo_pin) digitalRead(photo_pin)==LOW
 
 typedef unsigned char pin;
 
@@ -79,16 +69,17 @@ public:
 };
 
 
+
 // Abstract class Stage, implemented by State_1, State_2, etc
 class Stage{
 private:
-  State* current_state; //must have
-  pin coil; // must have
-  pin photocell_1; // must have
-  pin photocell_2; // must have
-  double velocity;
-  double distance_photocells;
-  double t_optimal;
+  State* current_state; //MUST have
+  pin coil; // MUST have
+  pin photocell_1; // MUST have
+  pin photocell_2; // MUST have
+  double velocity; // in meter per second
+  double distance_photocells; // in millimeter
+  double t_optimal; // in millisecond
 
 public:
   Stage(State* state, pin coil, pin photocell_1, pin photocell_2);
@@ -125,7 +116,7 @@ public:
 
 class Stage_1: public Stage{
 private:
-  pin shoot; // must have
+  pin shoot; // MUST have
 
 public:
   Stage_1(State* state, pin coil, pin photocell_1, pin photocell_2, pin shoot);
@@ -137,7 +128,6 @@ public:
   virtual void run_stage();
   virtual void ready();
 };
-
 
 
 #endif
