@@ -1,5 +1,9 @@
 #include "stages.h"
 
+#ifndef DEBUG_GAUSS
+#define DEBUG_GAUSS
+#endif
+
 extern enum State state;
 
 extern const pin coil_1;
@@ -11,8 +15,8 @@ static unsigned long t_fire; // the moment when the MOSFET is switched on (ms)
 static unsigned long t_photocell_1 = 0; // the moment when the projectile blocked the 1.photocell (ms)
 static unsigned long t_photocell_2 = 0; // the moment when the projectile blocked the 2.photocell (ms)
 static const double time_on_optimal = 2000.00; // optimal t_on calculated by simulation (ms)
-static const double d_photocells = 5; // distance between photocells (cm)
-static double velocity_stage_1 = 0; // cm per ms <=> 10* m per s
+static const double d_photocells = 20; // distance between photocells (mm)
+static double velocity_stage_1 = 0; // m per s
 
 void run_stage_1() {
   switch(state) {
@@ -26,7 +30,9 @@ void run_stage_1() {
         t_photocell_1 = millis();
         state = WAITING;
       }
-      Serial.print("INIT\n");
+      #ifdef DEBUG_GAUSS
+        Serial.print("INIT\n");
+      #endif
       break;
 
     case FIRING:
@@ -38,7 +44,9 @@ void run_stage_1() {
         t_photocell_1 = millis();
         state = WAITING;
       }
-      Serial.print("FIRING\n");
+      #ifdef DEBUG_GAUSS
+        Serial.print("FIRING\n");
+      #endif
       break;
 
     case STOPPED:
@@ -50,7 +58,9 @@ void run_stage_1() {
       if(BUTTON_RELEASED(shoot)){ // Set the state to INIT if the button is released
         state = INIT;
       }
-      Serial.print("STOPPED\n");
+      #ifdef DEBUG_GAUSS
+        Serial.print("STOPPED\n");
+      #endif
       break;
 
     case WAITING:
@@ -58,7 +68,9 @@ void run_stage_1() {
         t_photocell_2 = millis();
         state = CALCULATING;
       }
-      Serial.print("WAITING\n");
+      #ifdef DEBUG_GAUSS
+        Serial.print("WAITING\n");
+      #endif
       break;
 
     case CALCULATING:
@@ -68,7 +80,7 @@ void run_stage_1() {
         t_photocell_2 = 0;
       }
       Serial.print("State: CALCULATE | The velocity is ");
-      Serial.print(velocity_stage_1*10, 4); // Print the velocity (m per s)
+      Serial.print(velocity_stage_1, 4); // Print the velocity (m per s)
       Serial.print(" m/s \n");
       //TODO: OUTPUT THE VELOCITY ONTO THE EXTERNAL MINI-DISPLAY
 
