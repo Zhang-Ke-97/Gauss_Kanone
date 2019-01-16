@@ -10,11 +10,11 @@
 
 /* [IMPORTANT]
  * For both photocells:
- * LOW <=> nothing (trivial case)
- * HIGH <=> blocked (projectile passing through)
+ * HIGH <=> nothing (trivial case)
+ * LOW <=> blocked (projectile passing through)
  */
-#define BLOCKED(photo_pin) digitalRead(photo_pin)==HIGH
-#define UNBLOCKED(photo_pin) digitalRead(photo_pin)==LOW
+#define BLOCKED(photo_pin) digitalRead(photo_pin)==LOW
+#define UNBLOCKED(photo_pin) digitalRead(photo_pin)==HIGH
 
 typedef unsigned char pin;
 

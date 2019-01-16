@@ -15,19 +15,16 @@ static unsigned long t_fire; // the moment when the MOSFET is switched on (ms)
 static unsigned long t_photocell_1 = 0; // the moment when the projectile blocked the 1.photocell (ms)
 static unsigned long t_photocell_2 = 0; // the moment when the projectile blocked the 2.photocell (ms)
 static const double time_on_optimal = 2000.00; // optimal t_on calculated by simulation (ms)
-static const double d_photocells = 20; // distance between photocells (mm)
+static const double d_photocells = 22; // distance between photocells (mm)
 static double velocity_stage_1 = 0; // m per s
 
 void run_stage_1() {
   switch(state) {
     case INIT:
-      if(BUTTON_PUSHED(shoot)) {
-        digitalWrite(coil_1, HIGH); // Turn on MOSFET and discharge the capacitor
-        t_fire = millis();
+      if(BUTTON_PUSHED(shoot) && digitalRead(charge_state)==HIGH) {
         state = FIRING;
       }
       if(BLOCKED(photocell_1)) {
-        t_photocell_1 = millis();
         state = WAITING;
       }
       #ifdef DEBUG_GAUSS
@@ -36,6 +33,8 @@ void run_stage_1() {
       break;
 
     case FIRING:
+      digitalWrite(coil_1, HIGH); // Turn on MOSFET and discharge the capacitor
+      t_fire = millis();
       if(EXPIRED((double)millis(), (double)t_fire, time_on_optimal)){
         state = STOPPED;
       }
@@ -52,7 +51,6 @@ void run_stage_1() {
     case STOPPED:
       digitalWrite(coil_1, LOW); // Turn off MOSFET
       if(BLOCKED(photocell_1)) {
-        t_photocell_1 = millis();
         state = WAITING;
       }
       if(BUTTON_RELEASED(shoot)){ // Set the state to INIT if the button is released
@@ -64,6 +62,7 @@ void run_stage_1() {
       break;
 
     case WAITING:
+      t_photocell_1 = millis(); // start timing
       if(BLOCKED(photocell_2)) {
         t_photocell_2 = millis();
         state = CALCULATING;
