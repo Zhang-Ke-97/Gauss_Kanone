@@ -1,12 +1,9 @@
 #ifndef GAUSS_KANONE_STAGES_H
 #define GAUSS_KANONE_STAGES_H
 
-#define EXPIRED(t_now, t_start, T) t_now-t_start >= T
-
 #include "Arduino.h"
 
-#define BUTTON_PUSHED(button_pin) digitalRead(button_pin)==HIGH
-#define BUTTON_RELEASED(button_pin) digitalRead(button_pin)==LOW
+typedef unsigned char pin;
 
 /* [IMPORTANT]
  * For both photocells:
@@ -16,17 +13,35 @@
 #define BLOCKED(photo_pin) digitalRead(photo_pin)==LOW
 #define UNBLOCKED(photo_pin) digitalRead(photo_pin)==HIGH
 
-typedef unsigned char pin;
+#define BUTTON_PUSHED(button_pin) digitalRead(button_pin)==HIGH
+#define BUTTON_RELEASED(button_pin) digitalRead(button_pin)==LOW
+
+#define CAPACITOR_CHARGED(charge_state) digitalRead(charge_state)==HIGH
+#define CAPACITOR_UNCHARGED(charge_state) digitalRead(charge_state)==LOW
+
+#define EXPIRED(t_now, t_start, T) t_now-t_start >= T
+
 
 /* [State description]
  * INIT: inital state, ready for firing and calclulation
- * FIRING: the MOSFET is turned on, discharging capacitor
+ * BUTTONING: button is being pressed
+ * FIRING: button were relea and turn on the MOSFET to discharge capacitor
  * STOPPED: MOSFET is turned off
- * WAITING: waiting for the projectile reaching the 2.photocell
+ * TIMING: TIMING for the projectile reaching the 2.photocell
  * CALCULATING: calculate the velocity
+ * ERROR: something unexpected occurs
  */
-enum State {INIT, FIRING, STOPPED, WAITING, CALCULATING};
+enum State {INIT, BUTTONING, FIRING, STOPPED, TIMING, CALCULATING, ERROR};
+
+void behavior_init();
+void behavior_buttoning();
+void behavior_firing();
+void behavior_stopped();
+void behavior_timing();
+void behavior_calculating();
+void behavior_error();
 
 void run_stage_1();
+
 
 #endif
