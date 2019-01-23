@@ -1,11 +1,5 @@
-#include "stages.h"
+#include "stage_1.h"
 #include "timer.h"
-
-#ifndef DEBUG_GAUSS
-#define DEBUG_GAUSS
-#endif
-
-// #undef DEBUG_GAUSS
 
 extern enum State state;
 
@@ -17,7 +11,7 @@ extern const pin photocell_2;
 extern const pin charge_state;
 
 static unsigned long t_fire; // the moment when the MOSFET is switched on (ms)
-static const double time_on_optimal = 200.00; // optimal t_on calculated by simulation: 5.55ms
+static const double time_on_optimal = 5.55; // optimal t_on calculated by simulation: 5.55ms
 static const double d_photocells = 22; // distance between photocells, measured: 22mm
 static double velocity_stage_1 = 0; // velocity in m per s
 static Timer timer(0,0);
@@ -110,12 +104,16 @@ void behavior_calculating() {
 void behavior_error() {
   bool built_in_state = true;
   unsigned long t_prev = millis();
+
+  #ifdef DEBUG_GAUSS
   Serial.print("ERROR \n");
+  #endif
+
   while (1) {
     if (millis()-t_prev>300) {
       t_prev = millis();
       built_in_state = !built_in_state;
-      digitalWrite(13,built_in_state);
+      digitalWrite(LED_BUILTIN, built_in_state);
     }
   }
 }

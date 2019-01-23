@@ -1,6 +1,10 @@
 #ifndef GAUSS_KANONE_STAGES_H
 #define GAUSS_KANONE_STAGES_H
 
+// #ifndef DEBUG_GAUSS
+// #define DEBUG_GAUSS
+// #endif
+
 #include "Arduino.h"
 
 typedef unsigned char pin;

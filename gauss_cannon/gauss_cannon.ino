@@ -4,7 +4,7 @@
  * HIGH <=> blocked (projectile passing through)
  */
 
-#include "stages.h"
+#include "stage_1.h"
 
 enum State state = INIT;
 
@@ -15,7 +15,11 @@ extern const pin photocell_2 = 5;
 extern const pin charge_state = 2;
 
 void setup() {
+
+  #ifdef DEBUG_GAUSS
   Serial.begin(9600);
+  #endif
+
   pinMode(charge_state, INPUT);
   pinMode(shoot, INPUT_PULLUP); // Turn on internal pull-up resitor
   pinMode(photocell_1, INPUT_PULLUP);

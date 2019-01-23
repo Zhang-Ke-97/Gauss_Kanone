@@ -1,5 +1,5 @@
 #include "timer.h"
-#include "stages.h"
+#include "stage_1.h"
 
 extern enum State state; //imported form .ino
 
