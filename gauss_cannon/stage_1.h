@@ -1,9 +1,17 @@
 #ifndef GAUSS_KANONE_STAGES_H
 #define GAUSS_KANONE_STAGES_H
 
-// #ifndef DEBUG_GAUSS
-// #define DEBUG_GAUSS
-// #endif
+#ifndef DEBUG_GAUSS_SERIAL
+#define DEBUG_GAUSS_SERIAL
+#endif
+
+#undef DEBUG_GAUSS_SERIAL
+
+#ifndef DEBUG_GAUSS_LCD
+#define DEBUG_GAUSS_LCD
+#endif
+
+#undef DEBUG_GAUSS_LCD
 
 #include "Arduino.h"
 
