@@ -12,8 +12,8 @@ extern const pin photocell_2;
 extern const pin charge_state;
 extern LiquidCrystal lcd;
 
-static unsigned long t_fire; // the moment when the MOSFET is switched on (ms)
-static const double time_on_optimal = 5.55; // optimal t_on calculated by simulation: 5.55ms
+static unsigned long t_fire; // the moment when the MOSFET is switched on (in us)
+static const unsigned long time_on_optimal = 5546ul; // optimal t_on calculated by simulation: 5546 us
 static const double d_photocells = 22; // distance between photocells, measured: 22mm
 static double velocity_stage_1 = 0; // velocity in m per s
 static Timer timer(0,0);
@@ -51,7 +51,7 @@ void behavior_init() {
 void behavior_buttoning() {
   if (BUTTON_RELEASED(shoot) ) {
     if (CAPACITOR_CHARGED(charge_state)) {
-      t_fire = millis();
+      t_fire = micros();
       digitalWrite(coil_1, HIGH); // Entry activity of FIRING
       state = FIRING;
 
@@ -81,7 +81,7 @@ void behavior_buttoning() {
 
 
 void behavior_firing() {
-  if(EXPIRED((double)millis(), (double)t_fire, time_on_optimal)){
+  if(EXPIRED(micros(), t_fire, time_on_optimal)){
     digitalWrite(coil_1, LOW); //Exit activity of FIRING
     state = INIT;
 
@@ -130,8 +130,8 @@ void behavior_timing() {
 
 
 void behavior_calculating() {
-  unsigned long delta_t = timer.get_interval();
-  velocity_stage_1 = d_photocells/(double)delta_t;
+  unsigned long delta_t = timer.get_interval(); // delta_t in us
+  velocity_stage_1 = 0.001*d_photocells/(double)delta_t; // m/s = (mm/us)*10^(-3)
 
   #ifdef DEBUG_GAUSS_SERIAL
   Serial.print("The velocity is ");

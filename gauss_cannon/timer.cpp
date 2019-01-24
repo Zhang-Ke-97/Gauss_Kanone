@@ -4,11 +4,11 @@
 extern enum State state; //imported form .ino
 
 void Timer::start() {
-  t_entry = millis();
+  t_entry = micros();
 }
 
 void Timer::stop() {
-  t_leaving = millis();
+  t_leaving = micros();
 }
 
 void Timer::reset() {
@@ -17,7 +17,7 @@ void Timer::reset() {
 }
 
 unsigned long Timer::get_interval() {
-  if (t_leaving-t_entry>0) {
+  if (t_leaving-t_entry>0lu) {
     return t_leaving-t_entry;
   }else{
     state = ERROR;
