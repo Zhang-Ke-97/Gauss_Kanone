@@ -1,5 +1,6 @@
 #include "stage_1.h"
 #include "timer.h"
+#include <LiquidCrystal.h>
 
 extern enum State state;
 
@@ -9,6 +10,7 @@ extern const pin shoot;
 extern const pin photocell_1;
 extern const pin photocell_2;
 extern const pin charge_state;
+extern LiquidCrystal lcd;
 
 static unsigned long t_fire; // the moment when the MOSFET is switched on (ms)
 static const double time_on_optimal = 5.55; // optimal t_on calculated by simulation: 5.55ms
@@ -19,10 +21,17 @@ static Timer timer(0,0);
 void behavior_init() {
   if(BUTTON_PUSHED(shoot)) {
     state = BUTTONING;
+
+    #ifdef DEBUG_GAUSS_SERIAL
+    Serial.print("BUTTONING\n");
+    #endif
+
+    #ifdef DEBUG_GAUSS_LCD
+    lcd.clear();
+    lcd.print("BUTTONING\n");
+    #endif
   }
-  #ifdef DEBUG_GAUSS
-    Serial.print("INIT\n");
-  #endif
+
 }
 
 
@@ -31,14 +40,20 @@ void behavior_buttoning() {
     if (CAPACITOR_CHARGED(charge_state)) {
       t_fire = millis();
       state = FIRING;
+
+      #ifdef DEBUG_GAUSS_SERIAL
+        Serial.print("FIRING\n");
+      #endif
+
+      #ifdef DEBUG_GAUSS_LCD
+      lcd.clear();
+      lcd.print("FIRING\n");
+      #endif
+
     }else{
-      state = INIT;
+      state = INIT; // Back to INIT if the capacitor is not fully charged
     }
   }
-
-  #ifdef DEBUG_GAUSS
-    Serial.print("BUTTONING\n");
-  #endif
 }
 
 
@@ -47,14 +62,22 @@ void behavior_firing() {
 
   if(EXPIRED((double)millis(), (double)t_fire, time_on_optimal)){
     state = STOPPED;
+
+    #ifdef DEBUG_GAUSS_SERIAL
+      Serial.print("STOPPED\n");
+    #endif
+
+    #ifdef DEBUG_GAUSS_LCD
+    lcd.clear();
+    lcd.print("STOPPED\n");
+    #endif
   }
+
   if(BLOCKED(photocell_1)) { // unwanted situation: bad simulation
     digitalWrite(coil_1, LOW);
     state = TIMING;
   }
-  #ifdef DEBUG_GAUSS
-    Serial.print("FIRING\n");
-  #endif
+
 }
 
 
@@ -62,12 +85,16 @@ void behavior_stopped() {
   digitalWrite(coil_1, LOW); // Turn off MOSFET
   if(BLOCKED(photocell_1)) {
     state = TIMING;
+    #ifdef DEBUG_GAUSS_SERIAL
+      Serial.print("TIMING\n");
+    #endif
+
+    #ifdef DEBUG_GAUSS_LCD
+    lcd.clear();
+    lcd.print("TIMING\n");
+    #endif
   }
   timer.start();
-
-  #ifdef DEBUG_GAUSS
-    Serial.print("STOPPED\n");
-  #endif
 }
 
 
@@ -75,10 +102,16 @@ void behavior_timing() {
   if(BLOCKED(photocell_2)) {
     timer.stop();
     state = CALCULATING;
+
+    #ifdef DEBUG_GAUSS_SERIAL
+      Serial.print("CALCULATING\n");
+    #endif
+
+    #ifdef DEBUG_GAUSS_LCD
+    lcd.clear();
+    lcd.print("CALCULATING\n");
+    #endif
   }
-  #ifdef DEBUG_GAUSS
-    Serial.print("TIMING\n");
-  #endif
 }
 
 
@@ -87,26 +120,35 @@ void behavior_calculating() {
   velocity_stage_1 = d_photocells/(double)delta_t;
   timer.reset();
 
-  #ifdef DEBUG_GAUSS
-  Serial.print("State: CALCULATE | The velocity is ");
-  Serial.print(velocity_stage_1, 5); // Print the velocity (m per s)
+  #ifdef DEBUG_GAUSS_SERIAL
+  Serial.print("The velocity is ");
+  Serial.print(velocity_stage_1, 3); // Print the velocity (m per s)
   Serial.print(" m/s \n");
   #endif
+
+  lcd.clear();
+  lcd.print("The velocity is:");
+  lcd.setCursor(0, 1);
+  lcd.print(velocity_stage_1, 3);
+  lcd.print(" m/s");
 
   // Back to INIT when the projectile leaves the second photocell
   while(BLOCKED(photocell_2));
   state = INIT;
-
-  //TODO: OUTPUT THE VELOCITY ONTO THE EXTERNAL MINI-DISPLAY
-
+  lcd.print("...Next Run");
 }
 
 void behavior_error() {
   bool built_in_state = true;
   unsigned long t_prev = millis();
 
-  #ifdef DEBUG_GAUSS
-  Serial.print("ERROR \n");
+  #ifdef DEBUG_GAUSS_SERIAL
+  Serial.print("ERROR x_x\n");
+  #endif
+
+  #ifdef DEBUG_GAUSS_LCD
+  lcd.clear();
+  lcd.print("ERROR x_x\n");
   #endif
 
   while (1) {

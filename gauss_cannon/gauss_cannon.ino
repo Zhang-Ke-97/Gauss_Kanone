@@ -3,27 +3,32 @@
  * LOW <=> nothing (trivial case)
  * HIGH <=> blocked (projectile passing through)
  */
-
 #include "stage_1.h"
+#include <LiquidCrystal.h>
 
 enum State state = INIT;
 
+extern LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 extern const pin coil_1 = 9;
-extern const pin shoot = 7;
-extern const pin photocell_1 = 4;
-extern const pin photocell_2 = 5;
-extern const pin charge_state = 2;
+extern const pin shoot = 8;
+extern const pin photocell_1 = 6;
+extern const pin photocell_2 = 7;
+extern const pin charge_state = 10;
+
+// 6 7 Diode
 
 void setup() {
 
-  #ifdef DEBUG_GAUSS
+  #ifdef DEBUG_GAUSS_SERIAL
   Serial.begin(9600);
   #endif
 
+  lcd.begin(16,2);
+
   pinMode(charge_state, INPUT);
-  pinMode(shoot, INPUT_PULLUP); // Turn on internal pull-up resitor
-  pinMode(photocell_1, INPUT_PULLUP);
-  pinMode(photocell_2, INPUT_PULLUP);
+  pinMode(shoot, INPUT);
+  pinMode(photocell_1, INPUT);
+  pinMode(photocell_2, INPUT);
   pinMode(coil_1, OUTPUT);
   pinMode(13, OUTPUT);
 }
