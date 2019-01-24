@@ -30,7 +30,7 @@ void setup() {
   pinMode(photocell_1, INPUT);
   pinMode(photocell_2, INPUT);
   pinMode(coil_1, OUTPUT);
-  pinMode(13, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 void loop() {
@@ -45,10 +45,6 @@ void loop() {
 
     case FIRING:
       behavior_firing();
-      break;
-
-    case STOPPED:
-      behavior_stopped();
       break;
 
     case TIMING:

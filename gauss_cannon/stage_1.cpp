@@ -32,6 +32,19 @@ void behavior_init() {
     #endif
   }
 
+  if(BLOCKED(photocell_1)) {
+    timer.start(); //Entry activity of TIMING
+    state = TIMING;
+
+    #ifdef DEBUG_GAUSS_SERIAL
+    Serial.print("TIMING\n");
+    #endif
+
+    #ifdef DEBUG_GAUSS_LCD
+    lcd.clear();
+    lcd.print("TIMING\n");
+    #endif
+  }
 }
 
 
@@ -39,6 +52,7 @@ void behavior_buttoning() {
   if (BUTTON_RELEASED(shoot) ) {
     if (CAPACITOR_CHARGED(charge_state)) {
       t_fire = millis();
+      digitalWrite(coil_1, HIGH); // Entry activity of FIRING
       state = FIRING;
 
       #ifdef DEBUG_GAUSS_SERIAL
@@ -52,49 +66,49 @@ void behavior_buttoning() {
 
     }else{
       state = INIT; // Back to INIT if the capacitor is not fully charged
+
+      #ifdef DEBUG_GAUSS_SERIAL
+      Serial.print("INIT\n");
+      #endif
+
+      #ifdef DEBUG_GAUSS_LCD
+      lcd.clear();
+      lcd.print("INIT\n");
+      #endif
     }
   }
 }
 
 
 void behavior_firing() {
-  digitalWrite(coil_1, HIGH); // Turn on MOSFET and discharge the capacitor
-
   if(EXPIRED((double)millis(), (double)t_fire, time_on_optimal)){
-    state = STOPPED;
+    digitalWrite(coil_1, LOW); //Exit activity of FIRING
+    state = INIT;
 
     #ifdef DEBUG_GAUSS_SERIAL
-      Serial.print("STOPPED\n");
+      Serial.print("INIT\n");
     #endif
 
     #ifdef DEBUG_GAUSS_LCD
     lcd.clear();
-    lcd.print("STOPPED\n");
+    lcd.print("INIT\n");
     #endif
   }
 
   if(BLOCKED(photocell_1)) { // unwanted situation: bad simulation
     digitalWrite(coil_1, LOW);
     state = TIMING;
-  }
 
-}
-
-
-void behavior_stopped() {
-  digitalWrite(coil_1, LOW); // Turn off MOSFET
-  if(BLOCKED(photocell_1)) {
-    state = TIMING;
     #ifdef DEBUG_GAUSS_SERIAL
-      Serial.print("TIMING\n");
+      Serial.print("TIMING | bad simulation\n");
     #endif
 
     #ifdef DEBUG_GAUSS_LCD
     lcd.clear();
-    lcd.print("TIMING\n");
+    lcd.print("TIMING | bad simulation");
     #endif
   }
-  timer.start();
+
 }
 
 
@@ -118,7 +132,6 @@ void behavior_timing() {
 void behavior_calculating() {
   unsigned long delta_t = timer.get_interval();
   velocity_stage_1 = d_photocells/(double)delta_t;
-  timer.reset();
 
   #ifdef DEBUG_GAUSS_SERIAL
   Serial.print("The velocity is ");
@@ -134,6 +147,7 @@ void behavior_calculating() {
 
   // Back to INIT when the projectile leaves the second photocell
   while(BLOCKED(photocell_2));
+  timer.reset(); //Exit activity of CALCULATING
   state = INIT;
   lcd.print("...Next Run");
 }
@@ -173,10 +187,6 @@ void run_stage_1() {
 
     case FIRING:
       behavior_firing();
-      break;
-
-    case STOPPED:
-      behavior_stopped();
       break;
 
     case TIMING:
